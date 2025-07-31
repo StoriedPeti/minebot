@@ -1,5 +1,5 @@
 {
-  "name": "minecraft-afk-bot",
+  "name": "minebot",
   "version": "1.0.0",
   "description": "AFK bot a Minecrafthoz Renderen",
   "main": "index.js",
