@@ -5,8 +5,8 @@ let bot;
 
 function createBot() {
   bot = mineflayer.createBot({
-    host: 'Aternos_szerver_IP_vagy_domain', // pl: 'example.aternos.me'
-    port: 25565, // ha nem más a port
+    host: 'erettsegicraft.aternos.me', // pl: 'example.aternos.me'
+    port: 64345, // ha nem más a port
     username: 'AFKBot',
     version: '1.21.7', // vagy a szervered verziója
   });
