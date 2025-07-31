@@ -1,10 +1,11 @@
 const mineflayer = require('mineflayer');
+const express = require('express');
 
 let bot;
 
 function createBot() {
   bot = mineflayer.createBot({
-    host: 'Aternos_szerver_IP_vagy_domain', // cseréld erre!
+    host: 'Aternos_szerver_IP_vagy_domain', // pl: 'example.aternos.me'
     port: 25565, // ha nem más a port
     username: 'AFKBot',
     version: '1.21.7', // vagy a szervered verziója
@@ -45,13 +46,13 @@ function startRandomMovement() {
       if (Math.random() < 0.3) bot.setControlState('jump', true);
     }
 
-    // Néha üt egyet (bal egérgomb)
+    // Néha üt egyet
     if (Math.random() < 0.4) {
-      bot.activateItem(); // üt egyet levegőbe vagy előtte lévő blokkon/játékoson
+      bot.activateItem();
       setTimeout(() => bot.deactivateItem(), 100);
     }
 
-    // 2-5 mp múlva újra mozog
+    // 2-5 mp múlva újra
     const delay = 2000 + Math.random() * 3000;
     setTimeout(randomMove, delay);
   }
@@ -61,3 +62,15 @@ function startRandomMovement() {
 
 // Bot indítása
 createBot();
+
+// === Webszerver az UptimeRobothoz ===
+const app = express();
+
+app.get('/', (req, res) => {
+  res.send('Minecraft AFK bot él');
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Webszerver fut a ${PORT} porton – készen áll az UptimeRobotra!`);
+});
