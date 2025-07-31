@@ -1,76 +1,63 @@
 const mineflayer = require('mineflayer');
-const express = require('express');
-const app = express();
-
-const host = 'erettsegicraft.aternos.me'; // <- ezt cseréld ki a saját szervered címére
-const portSzerver = 64345; // Aternos default port
-const username = 'Herobrine'; // A bot neve
 
 let bot;
 
 function createBot() {
   bot = mineflayer.createBot({
-    host: host,
-    port: portSzerver,
-    username: username
+    host: 'Aternos_szerver_IP_vagy_domain', // cseréld erre!
+    port: 25565, // ha nem más a port
+    username: 'AFKBot',
+    version: '1.21.7', // vagy a szervered verziója
   });
 
-  bot.once('spawn', () => {
-    console.log('Bot csatlakozott és spawnolt.');
-    randomBehavior();
+  bot.on('login', () => {
+    console.log('Bot csatlakozott a szerverhez!');
+    startRandomMovement();
+  });
+
+  bot.on('error', err => {
+    console.log('Bot hiba:', err);
   });
 
   bot.on('end', () => {
-    console.log('Bot lecsatlakozott, újracsatlakozás 5 másodperc múlva...');
+    console.log('Bot lecsatlakozott, újracsatlakozás 5mp múlva...');
     setTimeout(createBot, 5000);
   });
-
-  bot.on('kicked', (reason) => {
-    console.log('Bot kirúgva:', reason);
-  });
-
-  bot.on('error', (err) => {
-    console.log('Bot hiba:', err);
-  });
 }
 
-// Webszerver pingeléshez
-app.get('/', (req, res) => {
-  res.send('Bot él!');
-});
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Web szerver fut a ${port} porton.`);
-});
+// Mozgás-ütés logika
+function startRandomMovement() {
+  const movements = ['forward', 'back', 'left', 'right', null];
 
-function randomMove() {
-  if (!bot) return;
-  bot.setControlState('forward', true);
-  setTimeout(() => {
+  function randomMove() {
+    // Előző mozgások leállítása
     bot.setControlState('forward', false);
-  }, 1000);
-}
+    bot.setControlState('back', false);
+    bot.setControlState('left', false);
+    bot.setControlState('right', false);
+    bot.setControlState('jump', false);
 
-function randomAttack() {
-  if (!bot) return;
-  bot.activateItem();
-  setTimeout(() => {
-    bot.deactivateItem();
-  }, 500);
-}
+    // Véletlenszerű mozgás kiválasztása
+    const move = movements[Math.floor(Math.random() * movements.length)];
+    if (move) {
+      bot.setControlState(move, true);
+      // Néha ugrik is egyet
+      if (Math.random() < 0.3) bot.setControlState('jump', true);
+    }
 
-function randomBehavior() {
-  if (!bot || !bot.entity) return;
+    // Néha üt egyet (bal egérgomb)
+    if (Math.random() < 0.4) {
+      bot.activateItem(); // üt egyet levegőbe vagy előtte lévő blokkon/játékoson
+      setTimeout(() => bot.deactivateItem(), 100);
+    }
 
-  const delay = 10000 + Math.random() * 20000;
-
-  if (Math.random() < 0.5) {
-    randomMove();
-  } else {
-    randomAttack();
+    // 2-5 mp múlva újra mozog
+    const delay = 2000 + Math.random() * 3000;
+    setTimeout(randomMove, delay);
   }
 
-  setTimeout(randomBehavior, delay);
+  randomMove();
 }
 
+// Bot indítása
 createBot();
