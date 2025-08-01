@@ -1,90 +1,80 @@
 const mineflayer = require('mineflayer');
-const express = require('express');
-const app = express();
-const port = process.env.PORT || 10000;
 
-// Webszerver a Renderhez, hogy UptimeRobot ne engedje elaludni
-app.get('/', (req, res) => res.send('Bot fut'));
-app.listen(port, () => console.log(`Web szerver fut a ${port} porton.`));
-
-// Név generátor emberszerű nevekből
-function generateUsername() {
-  const names = ['Steve', 'Alex', 'Miner', 'Frosti', 'Pixel', 'Noob', 'AFK'];
-  const suffix = Math.floor(Math.random() * 10000);
-  return names[Math.floor(Math.random() * names.length)] + '_' + suffix;
-}
-
-let bot;
+let botCount = 1; // Induló névsorszám
 
 function createBot() {
-  const username = generateUsername();
+  const botName = 'Bot' + botCount;
+  botCount++;
 
-  bot = mineflayer.createBot({
-    host: 'erettsegicraft.aternos.me', // <<< CSERÉLD KI SAJÁTODRA
-    port: 64345,
-    username: username,
-    version: '1.21.8', // vagy a te verziód
+  const bot = mineflayer.createBot({
+    host: 'SERVER_IP_VAGY_CÍM', // Ide írd a szerver IP-t vagy domain nevet
+    port: 25565, // Alapértelmezett minecraft port, ha más írd át
+    username: botName,
   });
 
   bot.on('login', () => {
-    console.log(`✅ Bot csatlakozott a szerverhez, név: ${username}`);
-    startRandomMovement();
-  });
-
-  bot.on('error', err => {
-    console.log('❌ Bot hiba:', err);
+    console.log(`Bot belépett névvel: ${botName}`);
   });
 
   bot.on('end', () => {
-    console.log('⚠️ Bot lecsatlakozott, újraindítás 5 mp múlva...');
-    setTimeout(createBot, 5000);
+    console.log('Bot lecsatlakozott, újracsatlakozás 5 másodperc múlva...');
+    setTimeout(createBot, 5000); // Újracsatlakozás
   });
-}
 
-function startRandomMovement() {
-  const movements = ['forward', 'back', 'left', 'right', null];
+  bot.on('kicked', (reason) => {
+    console.log(`Bot kirúgva: ${reason}`);
+  });
 
-  function randomAction() {
-    // Mozgás leállítása
-    bot.setControlState('forward', false);
-    bot.setControlState('back', false);
-    bot.setControlState('left', false);
-    bot.setControlState('right', false);
-    bot.setControlState('jump', false);
+  bot.on('error', (err) => {
+    console.log('Bot hiba:', err);
+  });
 
-    // Véletlenszerű mozgás
-    const move = movements[Math.floor(Math.random() * movements.length)];
-    if (move) {
-      bot.setControlState(move, true);
-      if (Math.random() < 0.3) bot.setControlState('jump', true);
+  // Mozgás ciklus - előre, hátra, ugrás, körbenézés, néha állás
+  let movingForward = true;
+  setInterval(() => {
+    if (!bot.entity) return;
+
+    // Mozgás váltogatás
+    if (movingForward) {
+      bot.setControlState('forward', true);
+      bot.setControlState('back', false);
+    } else {
+      bot.setControlState('forward', false);
+      bot.setControlState('back', true);
+    }
+    movingForward = !movingForward;
+
+    // Ugrás véletlenszerűen
+    if (Math.random() < 0.3) {
+      bot.setControlState('jump', true);
+      setTimeout(() => bot.setControlState('jump', false), 400);
     }
 
-    // Véletlenszerű ütés
-    if (Math.random() < 0.4) {
+    // Körbenézés (jobb-bal)
+    const yaw = (Math.random() * Math.PI * 2);
+    const pitch = 0; // nézés vízszintesen
+    bot.look(yaw, pitch, true);
+
+    // Néha állás (10% esély)
+    if (Math.random() < 0.1) {
+      bot.setControlState('forward', false);
+      bot.setControlState('back', false);
+    }
+  }, 4000);
+
+  // Chatelés minden 20-40 másodpercben
+  setInterval(() => {
+    if (bot.entity) {
+      bot.chat('Hello, én vagyok ' + botName);
+    }
+  }, 20000 + Math.random() * 20000);
+
+  // Ütés minden 10-30 másodpercben
+  setInterval(() => {
+    if (bot.entity) {
       bot.activateItem();
-      setTimeout(() => bot.deactivateItem(), 100);
     }
-
-    // Véletlenszerű nézelődés
-    if (Math.random() < 0.4) {
-      const yaw = (Math.random() - 0.5) * Math.PI;
-      const pitch = (Math.random() - 0.5) * Math.PI / 4;
-      bot.look(bot.entity.yaw + yaw, bot.entity.pitch + pitch, true);
-    }
-
-    // Néha chatel is valamit
-    if (Math.random() < 0.2) {
-      const messages = ['AFK vagyok!', 'Szép napot!', '👋', 'Hello', '🙂'];
-      const msg = messages[Math.floor(Math.random() * messages.length)];
-      bot.chat(msg);
-    }
-
-    const delay = 2000 + Math.random() * 3000;
-    setTimeout(randomAction, delay);
-  }
-
-  randomAction();
+  }, 10000 + Math.random() * 20000);
 }
 
-// Bot indítása
 createBot();
