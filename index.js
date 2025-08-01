@@ -9,8 +9,8 @@ function createBot() {
   const username = `AFKBot${botNumber++}`;
 
   bot = mineflayer.createBot({
-    host: 'your_server.aternos.me', // <-- cseréld ki a sajátodra!
-    port: 25565,
+    host: 'erettsegicraft.aternos.me', // <-- cseréld ki a sajátodra!
+    port: 64345,
     username: username,
     version: '1.21.7' // vagy amit használsz
   });
