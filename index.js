@@ -7,8 +7,8 @@ function createBot() {
   botCount++;
 
   const bot = mineflayer.createBot({
-    host: 'SERVER_IP_VAGY_CÍM', // Ide írd a szerver IP-t vagy domain nevet
-    port: 25565, // Alapértelmezett minecraft port, ha más írd át
+    host: 'erettsegicraft.aternos.me', // Ide írd a szerver IP-t vagy domain nevet
+    port: 64345, // Alapértelmezett minecraft port, ha más írd át
     username: botName,
   });
 
