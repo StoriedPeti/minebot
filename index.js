@@ -1,19 +1,23 @@
 const mineflayer = require('mineflayer');
 const express = require('express');
+const app = express();
 
 let bot;
+let botNumber = 1;
 
 function createBot() {
+  const username = `AFKBot${botNumber++}`;
+
   bot = mineflayer.createBot({
-    host: 'erettsegicraft.aternos.me', // pl: 'example.aternos.me'
-    port: 64345, // ha nem más a port
-    username: 'Herobrine',
-    version: '1.21.7', // vagy a szervered verziója
+    host: 'your_server.aternos.me', // <-- cseréld ki a sajátodra!
+    port: 25565,
+    username: username,
+    version: '1.21.7' // vagy amit használsz
   });
 
   bot.on('login', () => {
-    console.log('Bot csatlakozott a szerverhez!');
-    startRandomMovement();
+    console.log(`${username} csatlakozott a szerverhez!`);
+    startBehavior();
   });
 
   bot.on('error', err => {
@@ -21,56 +25,57 @@ function createBot() {
   });
 
   bot.on('end', () => {
-    console.log('Bot lecsatlakozott, újracsatlakozás 5mp múlva...');
+    console.log(`${username} lecsatlakozott, újracsatlakozás 5 mp múlva...`);
     setTimeout(createBot, 5000);
   });
 }
 
-// Mozgás-ütés logika
-function startRandomMovement() {
-  const movements = ['forward', 'back', 'left', 'right', null];
+function startBehavior() {
+  const actions = ['move', 'look', 'chat', 'hit', 'idle'];
 
-  function randomMove() {
-    // Előző mozgások leállítása
-    bot.setControlState('forward', false);
-    bot.setControlState('back', false);
-    bot.setControlState('left', false);
-    bot.setControlState('right', false);
-    bot.setControlState('jump', false);
+  function randomAction() {
+    const action = actions[Math.floor(Math.random() * actions.length)];
 
-    // Véletlenszerű mozgás kiválasztása
-    const move = movements[Math.floor(Math.random() * movements.length)];
-    if (move) {
-      bot.setControlState(move, true);
-      // Néha ugrik is egyet
-      if (Math.random() < 0.3) bot.setControlState('jump', true);
+    // Reset minden irány
+    bot.clearControlStates();
+
+    switch (action) {
+      case 'move':
+        const directions = ['forward', 'back', 'left', 'right'];
+        const dir = directions[Math.floor(Math.random() * directions.length)];
+        bot.setControlState(dir, true);
+        if (Math.random() < 0.5) bot.setControlState('jump', true);
+        break;
+
+      case 'look':
+        const yaw = Math.random() * 2 * Math.PI;
+        const pitch = (Math.random() - 0.5) * Math.PI / 2;
+        bot.look(yaw, pitch, true);
+        break;
+
+      case 'chat':
+        bot.chat("AFK bot vagyok!");
+        break;
+
+      case 'hit':
+        bot.activateItem();
+        setTimeout(() => bot.deactivateItem(), 200);
+        break;
+
+      case 'idle':
+        // csinál semmit
+        break;
     }
 
-    // Néha üt egyet
-    if (Math.random() < 0.4) {
-      bot.activateItem();
-      setTimeout(() => bot.deactivateItem(), 100);
-    }
-
-    // 2-5 mp múlva újra
     const delay = 2000 + Math.random() * 3000;
-    setTimeout(randomMove, delay);
+    setTimeout(randomAction, delay);
   }
 
-  randomMove();
+  randomAction();
 }
 
-// Bot indítása
+// web ping a Render miatt
+app.get("/", (req, res) => res.send("Bot él!"));
+app.listen(10000, () => console.log("Web szerver fut a 10000 porton."));
+
 createBot();
-
-// === Webszerver az UptimeRobothoz ===
-const app = express();
-
-app.get('/', (req, res) => {
-  res.send('Minecraft AFK bot él');
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Webszerver fut a ${PORT} porton – készen áll az UptimeRobotra!`);
-});
