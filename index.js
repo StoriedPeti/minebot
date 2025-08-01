@@ -74,3 +74,11 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Webszerver fut a ${PORT} porton – készen áll az UptimeRobotra!`);
 });
+
+bot.on('error', err => {
+  console.log('Bot hiba:', err);
+  if (err.code === 'ECONNRESET') {
+    console.log('Kapcsolat visszaállítása 5 másodperc múlva...');
+    setTimeout(createBot, 5000);
+  }
+});
